@@ -1,0 +1,78 @@
+import base64
+from io import BytesIO
+
+# Define a dictionary to map simulated predictions to disease names and solutions
+disease_dict = {
+    0: {
+        'name': 'Apple Scab',
+        'solution': 'Apply fungicides like captan or mancozeb. Remove and destroy fallen leaves and infected fruit to reduce the spread of the disease.'
+    },
+    1: {
+        'name': 'Tomato Late Blight',
+        'solution': 'Apply fungicides like mancozeb or chlorothalonil. Remove and destroy infected plants. Avoid overhead watering.'
+    },
+    # Add more diseases and pests as needed
+}
+
+# Replace with valid base64 strings
+apple_scab_image_base64 = """
+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
+...
+"""  # Ensure this is a valid base64 string
+
+tomato_late_blight_image_base64 = """
+iVBORw0KGgoAAAANSUhEUgAAAXcAAAF3CAYAAAAeukBMAAAABGdBTUEAALGPC/xhBQAAACBjSFJN
+AAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAA3N0lEQVR4nO3dyW3kMBRFUdq5
+...
+"""  # Ensure this is a valid base64 string
+
+def decode_image_from_base64(base64_string):
+    """Decodes a base64 string to an image (simulated)."""
+    try:
+        image_data = base64.b64decode(base64_string, validate=True)
+        return BytesIO(image_data)
+    except Exception as e:
+        print(f"Error decoding base64 string: {e}")
+        return None
+
+def predict_disease():
+    """Simulates predicting the disease and provides a solution."""
+    # Simulating prediction with a fixed class
+    predicted_class = 0  # Simulate Apple Scab for demonstration
+    disease_info = disease_dict.get(predicted_class, {'name': 'Unknown', 'solution': 'No solution available.'})
+    return disease_info
+
+def main():
+    print("Welcome to the Crop Disease and Pest Management System!")
+    
+    while True:
+        print("\nChoose an example image for testing:")
+        print("1. Apple Scab")
+        print("2. Tomato Late Blight")
+        choice = input("Enter the number of your choice: ").strip()
+
+        if choice == '1':
+            img = decode_image_from_base64(apple_scab_image_base64)
+        elif choice == '2':
+            img = decode_image_from_base64(tomato_late_blight_image_base64)
+        else:
+            print("Invalid choice. Exiting.")
+            break
+
+        if img:
+            try:
+                disease_info = predict_disease()
+                print(f"\nThe system has identified the problem as: {disease_info['name']}")
+                print(f"Recommended Solution: {disease_info['solution']}")
+            except Exception as e:
+                print(f"Error: {e}")
+        else:
+            print("Failed to decode the image.")
+
+        another = input("\nDo you want to analyze another image? (yes/no): ").strip().lower()
+        if another != 'yes':
+            print("Exiting the system. Thank you!")
+            break
+
+if __name__ == "__main__":
+    main()
